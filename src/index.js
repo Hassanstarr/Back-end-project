@@ -22,8 +22,14 @@ connectDB()
 
 
 /*
+
+//  Make an other file for DB connection
+
 import express from 'express'
 const app = express();
+
+// An Immediately Invoked Function Expression (IIFE) is a function expression that is defined and executed immediately after its creation
+// e.g., `(() => {})()`
 
 ( async () => {
     try {
