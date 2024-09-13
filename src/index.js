@@ -5,7 +5,7 @@ import { app } from "./app.js";
 
 // Load environment variables from .env file
 dotenv.config({
-    path: './env'  // Ensure this path is correct relative to your project structure
+    path: './.env'  // Ensure this path is correct relative to your project structure
 });
 
 

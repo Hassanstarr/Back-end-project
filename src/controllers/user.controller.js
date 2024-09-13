@@ -17,8 +17,7 @@ const registerUser = asyncHandler( async (req, res) => {
     // Check for user creation
     // Ruturn response
 
-    const {fullName, email, username, password} = req.body
-    console.log("Email: ", email)
+    const { fullName, email, username, password } = req.body;
 
     if (
         [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -26,7 +25,7 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(400, "All fields are required")
     }
 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username }, { email }]
     })
 
@@ -34,24 +33,31 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(409, "User with username or eamil already exists")
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.avatar[0]?.path;
-
-    if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file in required")
-    }
     
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+        // Handle avatar
+        const avatarLocalPath = req.files?.avatar?.[0]?.path;
+        if (!avatarLocalPath) {
+            throw new ApiError(400, "Avatar file is required");
+        }
 
-    if (!avatar) {
-        throw new ApiError(400, "Avatar file in required")
-    }
+        const avatar = await uploadOnCloudinary(avatarLocalPath);
+        if (!avatar) {
+            throw new ApiError(400, "Avatar file upload failed");
+        }
+    
+        // Handle coverImage 
+        // const coverImageLocalPath = req.files?.coverImage[0]?.path; // Can't deal when user doesn't upload cover Image
+        let coverImageUrl = "";
+        if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+            const coverImageLocalPath = req.files.coverImage[0].path;
+            const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+            coverImageUrl = coverImage?.url || "";  // Assign the cover image URL only if it exists
+        }
     
     const user = await User.create({
         fullName,
         avatar: avatar.url,
-        coverImage: coverImage.url || "",
+        coverImage: coverImageUrl,
         email,
         password,
         username: username.toLowerCase()
@@ -65,8 +71,8 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(500, "Something wnet wrong while registering the user")
     }
 
-    return res.status(201),json(
-        new ApiResponse(201, createdUser, "User registered successfully")
+    return res.status(201).json(
+        new ApiResponse(200, createdUser, "User registered successfully")
     )
 
 
