@@ -34,6 +34,67 @@ Entry point of the application:
 - Connects to the MongoDB database using a custom `connectDB()` function.
 - Starts the Express server on the specified `PORT`.
 
+### `user.model.js`
+
+Defines the schema for user data:
+- **username**: Unique identifier for users.
+- **email**: User's email address.
+- **fullName**: Full name of the user.
+- **avatar**: URL to the user's avatar image.
+- **coverImage**: URL to the user's cover image (optional).
+- **watchHistory**: List of videos watched by the user.
+- **password**: User's hashed password.
+- **refreshToken**: Token used to generate new access tokens.
+
+Includes methods for:
+- Hashing passwords before saving.
+- Comparing passwords.
+- Generating access and refresh tokens.
+
+### `video.model.js`
+
+Defines the schema for video data:
+- **videoFile**: URL to the video file.
+- **thumbnail**: URL to the video's thumbnail image.
+- **title**: Title of the video.
+- **description**: Description of the video.
+- **duration**: Duration of the video.
+- **isPublished**: Indicates whether the video is published.
+- **owner**: Reference to the user who uploaded the video.
+
+Includes pagination for handling large amounts of data.
+
+### `middlewares/multer.middleware.js` and `auth.middleware.js`
+
+**`multer.middleware.js`**:
+- **Purpose**: Configures Multer to handle file uploads.
+- **Storage Configuration**:
+  - **`destination`**: Sets the directory (`./public/temp`) where uploaded files are temporarily stored.
+  - **`filename`**: Defines the name of the uploaded file, preserving the original name.
+- **`upload` Middleware**:
+  - **`upload.fields`**: Manages file uploads for multiple fields (e.g., `avatar`, `coverImage`), with specified maximum file counts per field.
+
+**`auth.middleware.js`**:
+- **Purpose**: Provides authentication functionality using JWT.
+- **JWT Verification**:
+  - **`verifyJWT`**: Middleware that checks the validity of JWTs in requests to ensure users are authenticated before accessing protected routes.
+
+### `controllers/user.controller.js`
+
+**User Controller Actions**:
+- **`registerUser`**:
+  - **Purpose**: Handles user registration by validating input fields and managing file uploads.
+  - **Avatar and Cover Image Handling**: Uploads avatar and cover images to Cloudinary, updating user records with the corresponding image URLs.
+  
+- **`loginUser`**:
+  - **Purpose**: Authenticates users by verifying credentials and generating access and refresh tokens.
+  - **Token Management**: Issues JWT access and refresh tokens, and sets them in cookies for session management.
+
+- **`logoutUser`**:
+  - **Purpose**: Logs out users by removing JWT tokens from cookies and clearing the refresh token from the user's record.
+  - **Session Management**: Ensures the user’s session is fully terminated by clearing all related cookies.
+
+
 ## Packages Used
 
 - **bcrypt**: For password hashing and verification (`^5.1.1`).
@@ -44,6 +105,7 @@ Entry point of the application:
 - **jsonwebtoken**: For generating and verifying JSON Web Tokens (JWT) (`^9.0.2`).
 - **mongoose**: Object Data Modeling (ODM) library for MongoDB and Node.js (`^8.6.0`).
 - **mongoose-aggregate-paginate-v2**: Adds pagination to Mongoose aggregation queries (`^1.1.2`).
+- **multer**: Middleware for handling file uploads (`^1.4.5-lts.1`).
 
 ## Setup
 
@@ -56,5 +118,12 @@ Entry point of the application:
   PORT
   MONGODB_URI
   CORS_ORIGIN
+  ACCESS_TOKEN_SECRET
+  ACCESS_TOKEN_EXPIRY
+  REFRESH_TOKEN_SECRET
+  REFRESH_TOKEN_EXPIRY
+  CLOUDINARY_CLOUD_NAME
+  CLOUDINARY_API_KEY
+  CLOUDINARY_API_SECRET
   ```
   
