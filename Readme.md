@@ -51,6 +51,55 @@ Includes methods for:
 - Comparing passwords.
 - Generating access and refresh tokens.
 
+### Authentication Tokens :
+
+### Access Token
+
+- **Purpose**: An access token is used to authenticate a user’s request to access protected resources. It is a short-lived token that is included in the HTTP headers of requests to secure endpoints.
+- **Expiry**: Typically has a short expiration time (e.g., 1 day) to minimize the impact of potential token leaks.
+- **Usage**: Once issued upon user login or token refresh, it must be included in the `Authorization` header of subsequent requests to access restricted routes.
+
+### Refresh Token
+
+- **Purpose**: A refresh token is used to obtain a new access token once the current access token expires. It is a longer-lived token that is kept secure and is not exposed with every request.
+- **Expiry**: Has a longer expiration time compared to the access token (e.g., 10 days) to allow users to stay logged in for extended periods without re-authenticating.
+- **Usage**: Refresh tokens are stored securely (e.g., in HTTP-only cookies) and are sent to the server when the access token needs to be refreshed. They are then used to generate a new access token and, optionally, a new refresh token.
+
+### Token Management
+
+- **Access Token**: 
+  - Issued upon successful authentication or token refresh.
+  - Validates the user's session and grants access to protected routes.
+
+- **Refresh Token**: 
+  - Used to generate a new access token when the old one expires.
+  - Stored securely to prevent unauthorized access.
+
+### Workflow
+
+1. **Login**:
+   - User provides credentials.
+   - Server verifies credentials and issues an access token and a refresh token.
+
+2. **Access Token Usage**:
+   - User includes the access token in the `Authorization` header for protected requests.
+   - Server validates the token and grants or denies access to resources.
+
+3. **Token Expiry**:
+   - Once the access token expires, the user must use the refresh token to obtain a new access token.
+
+4. **Token Refresh**:
+   - User sends the refresh token to the server.
+   - Server verifies the refresh token, generates a new access token, and possibly a new refresh token.
+   - New tokens are sent back to the client, replacing the old ones.
+
+5. **Logout**:
+   - User requests to log out.
+   - Server invalidates the refresh token and clears the cookies holding the tokens.
+
+This approach ensures secure user sessions and limits the risk associated with token expiration and unauthorized access.
+
+
 ### `video.model.js`
 
 Defines the schema for video data:
