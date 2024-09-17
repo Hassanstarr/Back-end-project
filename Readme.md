@@ -94,6 +94,11 @@ Includes pagination for handling large amounts of data.
   - **Purpose**: Logs out users by removing JWT tokens from cookies and clearing the refresh token from the user's record.
   - **Session Management**: Ensures the user’s session is fully terminated by clearing all related cookies.
 
+- **`refreshAccessToken`**:
+  - **Purpose**: Refreshes the access token using a valid refresh token provided in cookies or the request body.
+  - **Token Verification**: Verifies the provided refresh token and generates new access and refresh tokens if valid.
+  - **Session Management**: Updates the cookies with new tokens and ensures the previous refresh token is invalidated.
+
 
 ## Packages Used
 
@@ -107,13 +112,31 @@ Includes pagination for handling large amounts of data.
 - **mongoose-aggregate-paginate-v2**: Adds pagination to Mongoose aggregation queries (`^1.1.2`).
 - **multer**: Middleware for handling file uploads (`^1.4.5-lts.1`).
 
+## Handling Cookies and Request Body in Express.js
+
+In a typical Express.js application, you may receive data from the client in different formats, such as cookies or the request body. This README explains how to handle both `req.cookies` and `req.body`.
+
+### `req.cookies`
+
+- `req.cookies` contains cookies that are sent by the client (browser or mobile app) with each request.
+- Cookies are small pieces of data stored on the client side, typically set by the server using the `Set-Cookie` header.
+- The client automatically sends cookies in subsequent requests, and you can access them using `req.cookies`.
+
+### `req.body`
+
+- **`req.body`** contains the data sent by the client in the **body of an HTTP request**, typically in a POST, PUT, or PATCH request.
+- This is commonly used when submitting form data, sending JSON payloads, or uploading files.
+- Unlike cookies, data in the body is explicitly sent by the client on each request.
+
+
 ## Setup
 
 ### Prerequisites
 
-- Node.js
-- MongoDB
-- `.env` file with the following variables:
+- **Node.js**: The runtime environment for executing JavaScript code on the server.
+- **MongoDB**: The NoSQL database used for storing user data and other resources.
+- **Cloudinary**: Required for handling file uploads (avatars, cover images).
+- **Environment Variables**: A `.env` file should be set up with the following variables:
   ```env
   PORT
   MONGODB_URI
