@@ -1,7 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import {ApiError} from '../utils/ApiError.js'
 import {User} from "../models/user.model.js"
-import { uploadOnCloudinary } from '../utils/cloudinary.js'
+import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
 import jwt from 'jsonwebtoken'
 
@@ -271,7 +271,7 @@ const updateAccountDetails = asyncHandler( async(req, res) => {
         throw new ApiError(400, "All field required")
     }
 
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
@@ -302,19 +302,44 @@ const updateUserAvatar = asyncHandler( async(req, res) => {
         throw new ApiError(400, "Error while uploading avatar")
     }
 
-    const user = await User.findByIdAndUpdate(
+        // ** From deteling old avatar **
+    // // Retrieve the user to get the old avatar
+    // const user = await User.findById(req.user._id);
+
+    // if (!user) {
+    //     throw new ApiError(404, "User not found");
+    // }
+
+    // // Check if there is an old avatar and delete it from Cloudinary
+    // if (user.avatar) {
+    //     // Extract public ID from the old avatar URL (Cloudinary stores this before file extension)
+    //     const publicId = user.avatar.split('/').pop().split('.')[0]; // Extract the public ID from the URL
+
+    //     try {
+    //         const deletingOldAvatar = await deleteFromCloudinary(publicId);
+
+    //         if (deletingOldAvatar.result !== 'ok') {
+    //             throw new ApiError(400, "Old avatar deletion failed");
+    //         }
+    //     } catch (error) {
+    //         console.error("Error deleting old avatar:", error.message);
+    //         throw new ApiError(500, "Error while deleting the old avatar");
+    //     }
+    // }
+
+    const updateUser = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                avatar: avatar.url
+                avatar: avatar.url, // Set the new avatar URL
             }
         },
         {new: true}
-    ).select("-password")
+    ).select("-password"); // Exclude password field from response
 
     return res
     .status(200)
-    .json(new ApiResponse(200, user, "Avatar update successfully"))
+    .json(new ApiResponse(200, updateUser, "Avatar update successfully"))
     
     
 } )
@@ -333,19 +358,44 @@ const updateUserCoverImage = asyncHandler( async(req, res) => {
         throw new ApiError(400, "Error while uploading cover image")
     }
 
-    const user = await User.findByIdAndUpdate(
+        // ** From deteling old cover Image **
+    // // Retrieve the user to get the old cover image
+    // const user = await User.findById(req.user._id);
+
+    // if (!user) {
+    //     throw new ApiError(404, "User not found");
+    // }
+
+    // // Check if there is an old cover image and delete it from Cloudinary
+    // if (user.coverImage) {
+    //     // Extract public ID from the old cover image URL (Cloudinary stores this before the file extension)
+    //     const publicId = user.coverImage.split('/').pop().split('.')[0]; // Extract the public ID from the URL
+
+    //     try {
+    //         const deletingOldCoverImage = await deleteFromCloudinary(publicId);
+
+    //         if (deletingOldCoverImage.result !== 'ok') {
+    //             throw new ApiError(400, "Old cover image deletion failed");
+    //         }
+    //     } catch (error) {
+    //         console.error("Error deleting old cover image:", error.message);
+    //         throw new ApiError(500, "Error while deleting the old cover image");
+    //     }
+    // }
+    
+    const updatedUser = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                coverImage: coverImage.url
+                coverImage: coverImage.url, // Set the new cover image URL
             }
         },
         {new: true}
-    ).select("-password")
+    ).select("-password"); // Exclude password field from the response
 
     return res
     .status(200)
-    .json(new ApiResponse(200, user, "Cover Image update successfully"))
+    .json(new ApiResponse(200, updatedUser, "Cover Image update successfully"))
     
     
 } )

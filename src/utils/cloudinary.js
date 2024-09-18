@@ -1,5 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs'
+import { ApiResponse } from './ApiResponse';
+import { ApiError } from './ApiError';
 
 
 // Configuration
@@ -9,6 +11,7 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Upload function
 const uploadOnCloudinary = async (localFilePath) => {
     try {
         // Upload an image
@@ -21,10 +24,35 @@ const uploadOnCloudinary = async (localFilePath) => {
         fs.unlinkSync(localFilePath)
         return response;
     } catch (error) {
-        fs.unlinkSync(localFilePath)    // remove the locally save temporary file as the upload operation got failed
+            // Remove the local file on failure
+            if (fs.existsSync(localFilePath)) {
+                fs.unlinkSync(localFilePath);
+            }
         return null;
     }
 }
 
+// // Delete function
+// const deleteFromCloudinary = async (publicId) => {
+//     try {
+//         if (!publicId) return null;
 
-export {uploadOnCloudinary}
+//         // Delete the image from Cloudinary
+//         const result = await cloudinary.uploader.destroy(publicId);
+
+//         // Handle the response
+//         if (result.result === 'ok') {
+//             return result;
+//         } else {
+//             throw new ApiError(500, "Unable to delete the avatar")
+//         }
+//     } catch (error) {
+//         throw new ApiError(500, "Unable to delete the avatar")
+//     }
+// };
+
+
+export {
+    uploadOnCloudinary,
+    //  deleteFromCloudinary
+}
