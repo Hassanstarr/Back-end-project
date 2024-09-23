@@ -99,6 +99,73 @@ Includes methods for:
 
 This approach ensures secure user sessions and limits the risk associated with token expiration and unauthorized access.
 
+## MongoDB Aggregation Framework
+
+### Overview
+
+The MongoDB Aggregation Framework is a powerful tool for performing data processing and transformation directly within the database. Aggregation operations process data records and return computed results. The aggregation pipeline is a series of stages where each stage transforms the documents and passes the results to the next stage. The result is a modified document or an aggregated value.
+
+Each stage in an aggregation pipeline performs a specific task, such as filtering documents (`$match`), joining collections (`$lookup`), adding new fields (`$addFields`), or projecting specific fields (`$project`).
+
+### Aggregation Pipeline in `getUserChannelProfile`
+
+The `getUserChannelProfile` function uses MongoDB's aggregation pipeline to fetch detailed information about a user channel. The pipeline processes the data from the `User` and `subscriptions` collections to retrieve the user’s channel profile along with subscription details. Below is an explanation of each stage used in the pipeline:
+
+```javascript
+const channel = await User.aggregate([
+  {
+    $match: {
+      username: username?.toLowerCase() // Match the user by their username (case-insensitive)
+    }
+  },
+  {
+    $lookup: {
+      from: "subscriptions", // Join with the "subscriptions" collection
+      localField: "_id", // Local user ID
+      foreignField: "channel", // Foreign field representing the subscription channel
+      as: "subscribers" // Store results in the "subscribers" field
+    }
+  },
+  {
+    $lookup: {
+      from: "subscriptions", // Another lookup on "subscriptions" collection
+      localField: "_id", // Local user ID
+      foreignField: "subscriber", // Foreign field representing the subscriber
+      as: "subscribedTo" // Store results in the "subscribedTo" field
+    }
+  },
+  {
+    $addFields: {
+      subscriberCount: {
+        $size: "$subscribers" // Calculate the number of subscribers
+      },
+      ChannelSubscribedToCount: {
+        $size: "$subscribedTo" // Calculate the number of channels the user is subscribed to
+      },
+      isSubscribed: {
+        $cond: {
+          if: { $in: [req.user?._id, "$subscribers.subscriber"] }, // Check if the current user is in the subscriber list
+          then: true,
+          else: false
+        }
+      }
+    }
+  },
+  {
+    $project: {
+      fullName: 1,
+      username: 1,
+      subscriberCount: 1,
+      ChannelSubscribedToCount: 1,
+      isSubscribed: 1,
+      avatar: 1,
+      coverImage: 1,
+      email: 1 // Include only specific fields in the final output
+    }
+  }
+])
+```
+
 
 ### `video.model.js`
 
