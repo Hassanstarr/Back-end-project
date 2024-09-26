@@ -166,6 +166,67 @@ const channel = await User.aggregate([
 ])
 ```
 
+### Handling User IDs in Mongoose Aggregation
+
+When working with MongoDB, the `_id` field is stored as an `ObjectId` type. This has some implications when querying or using aggregation pipelines in Mongoose.
+
+#### Aggregation Pipelines
+In aggregation pipelines, Mongoose does not automatically convert strings to `ObjectId` types. Therefore, if you're trying to match the user ID inside an aggregation, you must explicitly convert the `req.user._id` to `ObjectId` using `new mongoose.Types.ObjectId(req.user._id)`. 
+
+## Nested Pipeline Explanation
+
+This project includes a nested aggregation pipeline using **Mongoose** to fetch a user's watch history of videos, along with detailed information about each video's owner. The nested pipeline allows us to fetch data from multiple collections and structure it in a single result, ensuring efficient data retrieval and transformation.
+
+### Steps Breakdown
+
+The following explains the step-by-step process of how the pipeline works in Mongoose.
+
+### Code Example
+
+```javascript
+const user = await User.aggregate([
+    {
+        $match: {
+            _id: new mongoose.Types.ObjectId(req.user._id)  // Step 1: Match the current user by their ObjectId
+        }
+    },
+    {
+        $lookup: {                                          // Step 2: Lookup related documents from the "videos" collection
+            from: "videos",                                 // Collection to join with
+            localField: "watchHistory",                     // Local field containing the user's watched video IDs
+            foreignField: "_id",                            // Foreign field in the "videos" collection (i.e., the video IDs)
+            as: "watchHistory",                             // The result will be stored in the "watchHistory" field
+            pipeline:  [                                    // Nested pipeline for further transformations on "videos"
+                {
+                    $lookup: {                              // Step 3: Lookup video owners from the "users" collection
+                        from: "users",
+                        localField: "owner",                // Video's owner field
+                        foreignField: "_id",                // Owner's ID in the "users" collection
+                        as: "owner",                        // Result stored in the "owner" field
+                        pipeline: [                         // Nested pipeline to project only specific fields
+                            {
+                                $project: {                 // Step 4: Select only relevant fields for the video owner
+                                    fullName: 1,
+                                    username: 1,
+                                    avatar: 1
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    $addFields: {                           // Step 5: Convert the "owner" array into a single object
+                        owner: {
+                            $first: "$owner"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+]);
+```
+
 
 ### `video.model.js`
 

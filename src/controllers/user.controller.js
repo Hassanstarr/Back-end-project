@@ -1,9 +1,11 @@
 import asyncHandler from '../utils/asyncHandler.js'
 import {ApiError} from '../utils/ApiError.js'
 import {User} from "../models/user.model.js"
-import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
+import { uploadOnCloudinary } from '../utils/cloudinary.js'
+// import { deleteFromCloudinary } from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
 import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
 
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -475,6 +477,64 @@ const getUserChannelProfile = asyncHandler( async(req, res) => {
 } )
 
 
+const getWatchHistory = asyncHandler( async(req,res) => {
+    // In aggregation pipelines, we must use "new mongoose.Types.ObjectId(req.user._id)" 
+    // to convert the user ID to a proper ObjectId type for matching, since MongoDB stores _id as ObjectId. 
+    // However, in simpler Mongoose queries, "req.user._id" can be used directly, as Mongoose will handle the conversion internally.
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)  // Step 1: Match the current user by their ObjectId
+            }
+        },
+        {
+            $lookup: {                                          // Step 2: Lookup related documents from the "videos" collection
+                from: "videos",                                 // Collection to join with
+                localField: "watchHistory",                     // Local field containing the user's watched video IDs
+                foreignField: "_id",                            // Foreign field in the "videos" collection (i.e., the video IDs)
+                as: "watchHistory",                             // The result will be stored in "watchHistory" field
+                pipeline:  [                                    // Nested pipeline for further transformations on "videos"
+                    {
+                        $lookup: {                              // Step 3: Lookup video owners from the "users" collection
+                            from: "users",
+                            localField: "owner",                // Video's owner field
+                            foreignField: "_id",                // Owner's ID in the "users" collection
+                            as: "owner",                        // Result stored in the "owner" field
+                            pipeline: [                         // Nested pipeline to project only specific fields
+                                {
+                                    $project: {                 // Step 4: Select only relevant fields for the video owner
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {                           // Step 5: Convert the "owner" array into a single object
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            "Watch History fetched successfully"
+        )
+    )
+    
+} )
+
 
 
 export {
@@ -487,5 +547,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 }
