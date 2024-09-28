@@ -163,8 +163,8 @@ const logoutUser = asyncHandler( async(req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {           // Use $unset to completely remove the refreshToken field from the document
+                refreshToken: 1 // This removes the refreshToken field from the document
             }
         },
         {
@@ -281,7 +281,7 @@ const updateAccountDetails = asyncHandler( async(req, res) => {
                 email: email    // both typing method is correct
             }
         },
-        { new: true  } // if new is true than if retuen the data after it it save is the database
+        { new: true  } // if new is true than the data save in varaible will be after the $set update the database
     ).select("-password")
 
     return res
